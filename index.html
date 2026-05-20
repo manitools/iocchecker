@@ -3,371 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Engine IOC Checker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Bulk VirusTotal IOC Analyzer</title>
+    <!-- Tailwind CSS for clean, modern styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .json-tree { font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6">
 
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <header class="mb-8 border-b border-slate-800 pb-6 flex justify-between items-end">
-            <div>
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                    <i class="fa-solid px-2 fa-shield-halved text-blue-400"></i>Multi-Engine IOC Checker
-                </h1>
-                <p class="text-slate-400 mt-2">Analyze IPs, Domains, URLs, and Hashes across multiple threat intelligence platforms simultaneously.</p>
-            </div>
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="border-b border-slate-700 pb-4">
+            <h1 class="text-3xl font-bold tracking-tight text-teal-400">Bulk VirusTotal IOC Analyzer</h1>
+            <p class="text-slate-400 text-sm mt-1">Analyze hashes, IPs, and URLs directly from your browser.</p>
         </header>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <div class="xl:col-span-1 space-y-6">
-                
-                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
-                        <i class="fa-solid fa-gear"></i> Configurations
-                    </h2>
-                    <div class="space-y-4 text-sm">
-                        <div class="pb-2 mb-2 border-b border-slate-700">
-                            <label class="block text-slate-300 font-medium mb-1">CORS Proxy Routing URL</label>
-                            <input type="text" id="proxy-url" class="w-full bg-slate-900 border border-slate-600 rounded p-2 focus:outline-none focus:border-blue-500 text-slate-400" value="https://corsproxy.io/?">
-                            <p class="text-[10px] text-slate-500 mt-1">If the default proxy fails (Network Error), paste an alternative here.</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-slate-300 font-medium mb-1">VirusTotal Key</label>
-                            <input type="password" id="vt-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste VT API Key">
-                        </div>
-                        <div>
-                            <label class="block text-slate-300 font-medium mb-1">AbuseIPDB Key</label>
-                            <input type="password" id="abuseipdb-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste AbuseIPDB Key">
-                        </div>
-                        <div>
-                            <label class="block text-slate-300 font-medium mb-1">AlienVault OTX Key</label>
-                            <input type="password" id="otx-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste OTX API Key">
-                        </div>
-                        <div class="pt-2 flex gap-2">
-                            <button onclick="saveKeys()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-1.5 px-3 rounded text-xs transition">
-                                Save Config (Local)
-                            </button>
-                            <button onclick="clearKeys()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 font-medium py-1.5 px-3 rounded text-xs transition">
-                                Clear
-                            </button>
-                        </div>
-                    </div>
+        <!-- Configuration Panel -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-800 p-6 rounded-xl shadow-md border border-slate-700">
+            <!-- Credentials & Setup -->
+            <div class="space-y-4 md:col-span-1">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1">VirusTotal API Key (v3)</label>
+                    <input type="password" id="apiKey" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-teal-500 text-white" placeholder="Paste your API key here">
                 </div>
-
-                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-400">
-                        <i class="fa-solid fa-list-check"></i> Input Indicators
-                    </h2>
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-2">Enter one IOC per line:</label>
-                        <textarea id="ioc-input" rows="8" class="w-full bg-slate-900 border border-slate-700 rounded p-3 font-mono text-sm focus:outline-none focus:border-emerald-500 text-emerald-400" placeholder="1.1.1.1&#10;bad-domain.com"></textarea>
-                    </div>
-                    <button onclick="processIOCs()" class="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-play"></i> Run Multi-Check
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1">CORS Bypass Proxy</label>
+                    <input type="text" id="proxyUrl" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-teal-500 text-white" value="https://cors-anywhere.herokuapp.com/" placeholder="e.g., http://localhost:8080/">
+                    <p class="text-xs text-slate-500 mt-1">Required to prevent browser CORS blocks. If using the default demo proxy, you may need to visit it first to grant temporary access.</p>
+                </div>
+                <div class="pt-2">
+                    <button id="processBtn" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-2 px-4 rounded transition-colors text-sm shadow cursor-pointer">
+                        Analyze IOCs
                     </button>
                 </div>
             </div>
 
-            <div class="xl:col-span-2 space-y-6">
-                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl min-h-[500px]">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-square-poll-horizontal text-purple-400"></i> Assessment Results
-                        </h2>
-                        <div class="space-x-4">
-                            <button onclick="exportToCSV()" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition bg-emerald-950/30 px-3 py-1.5 rounded border border-emerald-900/50">
-                                <i class="fa-solid fa-file-csv mr-1"></i> Export CSV
-                            </button>
-                            <button onclick="clearResults()" class="text-sm text-slate-400 hover:text-slate-200 transition">Clear Table</button>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-700 text-slate-400 text-sm">
-                                    <th class="pb-3 font-semibold w-1/4">Indicator</th>
-                                    <th class="pb-3 font-semibold w-1/12">Type</th>
-                                    <th class="pb-3 font-semibold w-2/3">Engine Results</th>
-                                </tr>
-                            </thead>
-                            <tbody id="results-table-body" class="divide-y divide-slate-800 text-sm">
-                                <tr id="empty-state-row">
-                                    <td colspan="3" class="text-center py-12 text-slate-500">No indicators evaluated yet. Enter data and click Run.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <!-- IOC Input Area -->
+            <div class="md:col-span-2 flex flex-col">
+                <label class="block text-sm font-semibold text-slate-300 mb-1">IOC List (One per line)</label>
+                <textarea id="iocInput" class="w-full flex-grow bg-slate-900 border border-slate-600 rounded p-3 text-sm focus:outline-none focus:border-teal-500 text-white font-mono min-h-[180px]" placeholder="Paste hashes (MD5/SHA1/SHA256)&#10;Paste IP addresses (IPv4)&#10;Paste URLs (e.g., http://malicious.com)"></textarea>
             </div>
         </div>
+
+        <!-- Progress and Status Indicator -->
+        <div id="statusPanel" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="animate-spin inline-block w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full"></span>
+                <span id="statusText" class="text-sm font-medium">Processing...</span>
+            </div>
+            <div class="w-48 bg-slate-700 rounded-full h-2.5">
+                <div id="progressBar" class="bg-teal-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Results Toolbar -->
+        <div id="resultsToolbar" class="hidden flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <h2 class="text-lg font-bold text-slate-200">Analysis Results (<span id="resultCount">0</span>)</h2>
+            <div class="space-x-2">
+                <button onclick="exportData('csv')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold py-1.5 px-3 rounded cursor-pointer">Export CSV</button>
+                <button onclick="exportData('json')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold py-1.5 px-3 rounded cursor-pointer">Export JSON</button>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="resultsContainer" class="space-y-4"></div>
     </div>
 
+    <!-- Application JavaScript Logic -->
     <script>
-        window.onload = function() {
-            if(localStorage.getItem('proxy_url')) document.getElementById('proxy-url').value = localStorage.getItem('proxy_url');
-            if(localStorage.getItem('vt_key')) document.getElementById('vt-key').value = localStorage.getItem('vt_key');
-            if(localStorage.getItem('abuseipdb_key')) document.getElementById('abuseipdb-key').value = localStorage.getItem('abuseipdb_key');
-            if(localStorage.getItem('otx_key')) document.getElementById('otx-key').value = localStorage.getItem('otx_key');
-        };
+        let globalResults = [];
 
-        function saveKeys() {
-            localStorage.setItem('proxy_url', document.getElementById('proxy-url').value);
-            localStorage.setItem('vt_key', document.getElementById('vt-key').value);
-            localStorage.setItem('abuseipdb_key', document.getElementById('abuseipdb-key').value);
-            localStorage.setItem('otx_key', document.getElementById('otx-key').value);
-            alert('Configuration safely saved to your local browser storage!');
+        // Helper: Base64 URL safe encoding without padding (Required by VirusTotal v3 for URLs)
+        function base64UrlEncode(url) {
+            return btoa(url).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
         }
 
-        function clearKeys() {
-            localStorage.clear();
-            document.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
-            document.getElementById('proxy-url').value = 'https://corsproxy.io/?';
-            alert('Cleared saved configurations.');
-        }
-
-        function clearResults() {
-            document.getElementById('results-table-body').innerHTML = `
-                <tr id="empty-state-row">
-                    <td colspan="3" class="text-center py-12 text-slate-500">No indicators evaluated yet. Enter data and click Run.</td>
-                </tr>`;
-        }
-
-        function detectIOCType(val) {
-            val = val.trim();
+        // Helper: Detect the type of IOC based on patterns
+        function detectIocType(ioc) {
+            const clean = ioc.trim();
             const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-            const hashRegex = /^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/;
-            const urlRegex = /^https?:\/\//i;
+            const md5Regex = /^[a-fA-E0-9]{32}$/i;
+            const sha1Regex = /^[a-fA-E0-9]{40}$/i;
+            const sha256Regex = /^[a-fA-E0-9]{64}$/i;
             
-            if (ipRegex.test(val)) return 'IP';
-            if (hashRegex.test(val)) return 'Hash';
-            if (urlRegex.test(val)) return 'URL';
-            if (val.includes('.') && !val.includes(' ')) return 'Domain';
-            return 'Unknown';
+            if (ipRegex.test(clean)) return 'ip';
+            if (md5Regex.test(clean) || sha1Regex.test(clean) || sha256Regex.test(clean)) return 'hash';
+            if (clean.startsWith('http://') || clean.startsWith('https://') || clean.includes('.')) return 'url';
+            return 'unknown';
         }
 
-        async function processIOCs() {
-            const input = document.getElementById('ioc-input').value;
-            const lines = input.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const tbody = document.getElementById('results-table-body');
+        // Action: Core logic to process the collection of IOCs
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const proxyUrl = document.getElementById('proxyUrl').value.trim();
+            const rawIocs = document.getElementById('iocInput').value.split('\n');
             
-            if(lines.length === 0) {
-                alert('Please enter at least one IOC line.');
+            if (!apiKey) {
+                alert('Please provide a valid VirusTotal API Key.');
                 return;
             }
 
-            const emptyRow = document.getElementById('empty-state-row');
-            if(emptyRow) emptyRow.remove();
+            const iocs = rawIocs.map(i => i.trim()).filter(i => i.length > 0);
+            if (iocs.length === 0) {
+                alert('Please enter at least one IOC to check.');
+                return;
+            }
 
-            for (let ioc of lines) {
-                const type = detectIOCType(ioc);
-                const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
+            // UI Setup
+            globalResults = [];
+            document.getElementById('resultsContainer').innerHTML = '';
+            const statusPanel = document.getElementById('statusPanel');
+            const statusText = document.getElementById('statusText');
+            const progressBar = document.getElementById('progressBar');
+            statusPanel.classList.remove('hidden');
+            statusPanel.classList.add('flex');
+
+            for (let i = 0; i < iocs.length; i++) {
+                const ioc = iocs[i];
+                const type = detectIocType(ioc);
                 
-                const rowHTML = `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-4 font-mono font-medium text-slate-200 break-all pr-4 align-top">${ioc}</td>
-                        <td class="py-4 align-top"><span class="px-2 py-0.5 rounded text-xs font-semibold uppercase bg-slate-700 text-slate-300">${type}</span></td>
-                        <td class="py-4 space-y-2 align-top" id="${rowId}">
-                            <span class="text-xs text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Checking engines...</span>
-                        </td>
-                    </tr>`;
-                tbody.insertAdjacentHTML('afterbegin', rowHTML);
+                statusText.innerText = `Analyzing (${i + 1}/${iocs.length}): ${ioc}`;
+                progressBar.style.width = `${((i + 1) / iocs.length) * 100}%`;
 
-                fetchEngineData(ioc, type, rowId);
-            }
-        }
+                let endpoint = '';
+                if (type === 'hash') endpoint = `files/${ioc}`;
+                else if (type === 'ip') endpoint = `ip_addresses/${ioc}`;
+                else if (type === 'url') endpoint = `urls/${base64UrlEncode(ioc)}`;
 
-        async function fetchEngineData(ioc, type, rowId) {
-            const cell = document.getElementById(rowId);
-            cell.innerHTML = ''; 
-            
-            // Fetch proxy directly from UI state
-            const currentProxy = document.getElementById('proxy-url').value.trim();
+                let resultData = { ioc, type, status: 'Error', malicious: 0, harmless: 0, total: 0, details: null };
 
-            const keys = {
-                vt: document.getElementById('vt-key').value.trim(),
-                abuseipdb: document.getElementById('abuseipdb-key').value.trim(),
-                otx: document.getElementById('otx-key').value.trim()
-            };
-
-            // ---- ENGINE: abuse.ch ----
-            if (type === 'Hash' || type === 'URL') {
-                createBadge(cell, 'abuse.ch', 'Checking...', 'slate');
-                try {
-                    let targetUrl, bodyParams;
-                    if (type === 'Hash') {
-                        targetUrl = 'https://mb-api.abuse.ch/api/v1/';
-                        bodyParams = new URLSearchParams({ 'query': 'get_info', 'hash': ioc });
-                    } else {
-                        targetUrl = 'https://urlhaus-api.abuse.ch/v1/url/';
-                        bodyParams = new URLSearchParams({ 'url': ioc });
-                    }
-
-                    const response = await fetch(currentProxy + encodeURIComponent(targetUrl), {
-                        method: 'POST',
-                        body: bodyParams
-                    });
-                    const data = await response.json();
-                    const isMalicious = (data.query_status === 'ok');
-                    updateBadge(cell, 'abuse.ch', isMalicious ? 'Malicious Match Found' : 'Clean / No Match', isMalicious ? 'red' : 'emerald');
-                } catch (e) {
-                    updateBadge(cell, 'abuse.ch', 'Proxy Blocked / Network Error', 'yellow');
+                if (type === 'unknown') {
+                    resultData.status = 'Unsupported Type';
+                    appendResultCard(resultData);
+                    globalResults.push(resultData);
+                    continue;
                 }
-            }
 
-            // ---- ENGINE: VirusTotal ----
-            if (keys.vt) {
-                createBadge(cell, 'VirusTotal', 'Checking...', 'slate');
                 try {
-                    let endpoint = '';
-                    if (type === 'IP') endpoint = `https://www.virustotal.com/api/v3/ip_addresses/${ioc}`;
-                    if (type === 'Domain') endpoint = `https://www.virustotal.com/api/v3/domains/${ioc}`;
-                    if (type === 'Hash') endpoint = `https://www.virustotal.com/api/v3/files/${ioc}`;
-                    if (type === 'URL') endpoint = `https://www.virustotal.com/api/v3/urls/${btoa(ioc).replace(/=/g, "")}`;
-
-                    if (endpoint) {
-                        const res = await fetch(currentProxy + encodeURIComponent(endpoint), { 
-                            headers: { 'x-apikey': keys.vt } 
-                        });
-                        
-                        if(res.ok) {
-                            const data = await res.json();
-                            const attrs = data.data.attributes;
-                            const stats = attrs.last_analysis_stats;
-                            const reputation = attrs.reputation !== undefined ? attrs.reputation : 'N/A';
-                            const tags = (attrs.tags && attrs.tags.length > 0) ? attrs.tags.join(', ') : 'None';
-                            
-                            const text = `Malicious: ${stats.malicious} | Harmless: ${stats.harmless} | Rep: ${reputation} | Tags: ${tags}`;
-                            updateBadge(cell, 'VirusTotal', text, stats.malicious > 0 ? 'red' : 'emerald');
-                        } else {
-                            updateBadge(cell, 'VirusTotal', `Error (${res.status})`, 'yellow');
+                    // Combine proxy target URL with VT Endpoint
+                    const targetUrl = `https://www.virustotal.com/api/v3/${endpoint}`;
+                    const response = await fetch(proxyUrl + targetUrl, {
+                        method: 'GET',
+                        headers: {
+                            'x-apikey': apiKey,
+                            'Accept': 'application/json'
                         }
-                    }
-                } catch (e) {
-                    updateBadge(cell, 'VirusTotal', 'Proxy Blocked / Network Error', 'yellow');
-                }
-            }
-
-            // ---- ENGINE: AbuseIPDB ----
-            if (keys.abuseipdb && type === 'IP') {
-                createBadge(cell, 'AbuseIPDB', 'Checking...', 'slate');
-                try {
-                    const endpoint = `https://api.abuseipdb.com/api/v2/check?ipAddress=${ioc}`;
-                    const res = await fetch(currentProxy + encodeURIComponent(endpoint), {
-                        headers: { 'Key': keys.abuseipdb, 'Accept': 'application/json' }
                     });
-                    if (res.ok) {
-                        const resData = await res.json();
-                        const score = resData.data.abuseConfidenceScore;
-                        updateBadge(cell, 'AbuseIPDB', `Abuse Confidence: ${score}%`, score > 10 ? 'red' : 'emerald');
+
+                    if (response.ok) {
+                        const json = await response.json();
+                        const stats = json.data?.attributes?.last_analysis_stats || {};
+                        resultData.status = 'Success';
+                        resultData.malicious = stats.malicious || 0;
+                        resultData.harmless = stats.harmless || 0;
+                        resultData.total = Object.values(stats).reduce((a, b) => a + b, 0);
+                        resultData.details = json.data;
                     } else {
-                        updateBadge(cell, 'AbuseIPDB', `Error (${res.status})`, 'yellow');
+                        resultData.status = `HTTP ${response.status}: ${response.statusText}`;
                     }
-                } catch (e) {
-                    updateBadge(cell, 'AbuseIPDB', 'Proxy Blocked / Network Error', 'yellow');
+                } catch (err) {
+                    resultData.status = `Proxy/Network Exception`;
+                    console.error(err);
                 }
+
+                appendResultCard(resultData);
+                globalResults.push(resultData);
+                
+                // Slight cooling delay to respect API rate limits (especially for standard keys)
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            // ---- ENGINE: AlienVault OTX ----
-            if (keys.otx && (type === 'IP' || type === 'Domain' || type === 'Hash')) {
-                createBadge(cell, 'AlienVault OTX', 'Checking...', 'slate');
-                try {
-                    let section = type === 'IP' ? 'IPv4' : type === 'Domain' ? 'domain' : 'file';
-                    const endpoint = `https://otx.alienvault.com/api/v1/indicators/${section}/${ioc}/general`;
-                    const res = await fetch(currentProxy + encodeURIComponent(endpoint), {
-                        headers: { 'X-OTX-API-KEY': keys.otx }
-                    });
-                    if (res.ok) {
-                        const resData = await res.json();
-                        const count = resData.pulse_info.count || 0;
-                        updateBadge(cell, 'AlienVault OTX', `${count} Related Pulses`, count > 0 ? 'red' : 'emerald');
-                    } else {
-                        updateBadge(cell, 'AlienVault OTX', `Error (${res.status})`, 'yellow');
-                    }
-                } catch (e) {
-                    updateBadge(cell, 'AlienVault OTX', 'Proxy Blocked / Network Error', 'yellow');
-                }
-            }
+            statusPanel.classList.remove('flex');
+            statusPanel.classList.add('hidden');
+            document.getElementById('resultsToolbar').classList.remove('hidden');
+            document.getElementById('resultCount').innerText = globalResults.length;
+        });
 
-            if(cell.children.length === 0) {
-                cell.innerHTML = '<span class="text-xs text-slate-500">No active engine supported this IOC or missing API keys.</span>';
-            }
-        }
-
-        // CSV Export Function
-        function exportToCSV() {
-            let csv = [];
-            const rows = document.querySelectorAll("#results-table-body tr");
+        // UI Component: Render the detailed card structure for each IOC
+        function appendResultCard(res) {
+            const container = document.getElementById('resultsContainer');
+            const cardId = 'card_' + Math.random().toString(36).substr(2, 9);
             
-            if(rows.length === 0 || rows[0].id === 'empty-state-row') {
-                alert("No data to export.");
-                return;
+            let badgeColor = 'bg-slate-700 text-slate-300';
+            if (res.status === 'Success') {
+                badgeColor = res.malicious > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
             }
 
-            csv.push("Indicator,Type,Engine Results");
+            const cardHtml = `
+                <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
+                    <div class="p-4 flex flex-wrap items-center justify-between gap-4 bg-slate-800/50">
+                        <div class="flex items-center space-x-3 min-w-0 flex-1">
+                            <span class="text-xs uppercase px-2 py-0.5 rounded bg-slate-900 font-semibold tracking-wider text-slate-400">${res.type}</span>
+                            <span class="font-mono font-medium text-slate-200 truncate block text-sm select-all">${res.ioc}</span>
+                        </div>
+                        <div class="flex items-center space-x-3 shrink-0">
+                            <span class="text-xs px-2.5 py-1 rounded-full font-medium ${badgeColor}">
+                                ${res.status === 'Success' ? `${res.malicious}/${res.total} Detections` : res.status}
+                            </span>
+                            ${res.details ? `
+                            <button onclick="toggleAccordion('${cardId}')" class="text-slate-400 hover:text-white text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition-colors cursor-pointer">
+                                View Full Data
+                            </button>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Expandable Data Section -->
+                    <div id="${cardId}" class="hidden border-t border-slate-700 bg-slate-950 p-4 overflow-x-auto">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-xs border-b border-slate-800 pb-4">
+                            <div>
+                                <p class="text-slate-400 mb-1"><strong class="text-slate-300">Engine Breakdown:</strong></p>
+                                <p class="text-rose-400">Malicious: ${res.details?.attributes?.last_analysis_stats?.malicious || 0}</p>
+                                <p class="text-amber-400">Suspicious: ${res.details?.attributes?.last_analysis_stats?.suspicious || 0}</p>
+                                <p class="text-emerald-400">Harmless: ${res.details?.attributes?.last_analysis_stats?.harmless || 0}</p>
+                                <p class="text-slate-400">Undetected: ${res.details?.attributes?.last_analysis_stats?.undetected || 0}</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 mb-1"><strong class="text-slate-300">Metadata Context:</strong></p>
+                                <p>Reputation Score: ${res.details?.attributes?.reputation || 0}</p>
+                                <p class="truncate">Context Info: ${res.details?.attributes?.meaning || res.details?.attributes?.as_owner || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <p class="text-xs font-semibold text-teal-400 mb-2">Raw Response Attributes JSON:</p>
+                        <pre class="json-tree text-slate-300">${JSON.stringify(res.details?.attributes || {}, null, 2)}</pre>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        }
 
-            rows.forEach(row => {
-                let cols = row.querySelectorAll("td");
-                if (cols.length < 3) return; 
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
 
-                let indicator = `"${cols[0].innerText.replace(/"/g, '""')}"`;
-                let type = `"${cols[1].innerText.replace(/"/g, '""')}"`;
-                
-                let engines = [];
-                const badges = cols[2].querySelectorAll("div");
-                badges.forEach(b => {
-                    engines.push(b.innerText.replace(/\n/g, ' ').replace(/"/g, '""').trim());
+        // Action: Handling format structure exports
+        function exportData(format) {
+            if (globalResults.length === 0) return;
+
+            if (format === 'json') {
+                const blob = new Blob([JSON.stringify(globalResults, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vt_analysis_${Date.now()}.json`;
+                a.click();
+            } else if (format === 'csv') {
+                let csvRows = ['IOC,Type,Status,Malicious_Detections,Total_Engines,Reputation'];
+                globalResults.forEach(r => {
+                    const rep = r.details?.attributes?.reputation || 0;
+                    csvRows.push(`"${r.ioc}","${r.type}","${r.status}",${r.malicious},${r.total},${rep}`);
                 });
-                let engineResults = `"${engines.join(" || ")}"`;
-                
-                csv.push([indicator, type, engineResults].join(","));
-            });
-
-            const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
-            const downloadLink = document.createElement("a");
-            downloadLink.download = `IOC_Assessment_${new Date().getTime()}.csv`;
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        }
-
-        // Helper UI functions
-        function createBadge(container, engineName, text, color) {
-            const badgeId = `${container.id}-${engineName.replace(/\s+/g, '')}`;
-            const html = `
-                <div id="${badgeId}" class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs">
-                    <span class="font-medium text-slate-400 w-24">${engineName}:</span>
-                    <span class="badge-status text-slate-300 font-mono text-right flex-1 ml-2 break-words leading-relaxed">${text}</span>
-                </div>`;
-            container.insertAdjacentHTML('beforeend', html);
-        }
-
-        function updateBadge(container, engineName, text, colorTheme) {
-            const badgeId = `${container.id}-${engineName.replace(/\s+/g, '')}`;
-            const badge = document.getElementById(badgeId);
-            if (!badge) return;
-
-            const statusSpan = badge.querySelector('.badge-status');
-            statusSpan.innerText = text;
-
-            badge.classList.remove('border-slate-700', 'bg-slate-900');
-
-            if(colorTheme === 'red') {
-                badge.classList.add('border-red-900/80', 'bg-red-950/30');
-                statusSpan.classList.add('text-red-400', 'font-bold');
-            } else if (colorTheme === 'emerald') {
-                badge.classList.add('border-emerald-900/50', 'bg-emerald-950/10');
-                statusSpan.classList.add('text-emerald-400');
-            } else if (colorTheme === 'amber') {
-                badge.classList.add('border-amber-900/50', 'bg-amber-950/10');
-                statusSpan.classList.add('text-amber-400');
-            } else if (colorTheme === 'yellow') {
-                badge.classList.add('border-yellow-900/30');
-                statusSpan.classList.add('text-slate-500', 'italic');
+                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vt_analysis_${Date.now()}.csv`;
+                a.click();
             }
         }
     </script>
