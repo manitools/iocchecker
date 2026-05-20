@@ -4,26 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Engine IOC Checker</title>
-    <!-- Tailwind CSS for modern, clean UI -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <!-- Header -->
-        <header class="mb-8 border-b border-slate-800 pb-6">
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                <i class="fa-solid px-2 fa-shield-halved"></i>Multi-Engine IOC Checker
-            </h1>
-            <p class="text-slate-400 mt-2">Analyze IPs, Domains, URLs, and Hashes across multiple threat intelligence platforms simultaneously.</p>
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-8 border-b border-slate-800 pb-6 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                    <i class="fa-solid px-2 fa-shield-halved text-blue-400"></i>Multi-Engine IOC Checker
+                </h1>
+                <p class="text-slate-400 mt-2">Analyze IPs, Domains, URLs, and Hashes across multiple threat intelligence platforms simultaneously.</p>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Side: Configuration & Inputs -->
-            <div class="lg:col-span-1 space-y-6">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div class="xl:col-span-1 space-y-6">
                 
-                <!-- API Keys Card -->
                 <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
                         <i class="fa-solid fa-key"></i> API Configurations
@@ -56,14 +54,13 @@
                     </div>
                 </div>
 
-                <!-- IOC Input Card -->
                 <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-400">
                         <i class="fa-solid fa-list-check"></i> Input Indicators
                     </h2>
                     <div>
-                        <label class="block text-sm text-slate-400 mb-2">Enter one IOC per line (IP, Domain, URL, or MD5/SHA1/SHA256 Hash):</label>
-                        <textarea id="ioc-input" rows="10" class="w-full bg-slate-900 border border-slate-700 rounded p-3 font-mono text-sm focus:outline-none focus:border-emerald-500 text-emerald-400" placeholder="1.1.1.1&#10;bad-domain.com&#10;https://malicious-site.net/path&#10;44d88612fea8a8f36de82e1278abb02f"></textarea>
+                        <label class="block text-sm text-slate-400 mb-2">Enter one IOC per line (IP, Domain, URL, or Hash):</label>
+                        <textarea id="ioc-input" rows="8" class="w-full bg-slate-900 border border-slate-700 rounded p-3 font-mono text-sm focus:outline-none focus:border-emerald-500 text-emerald-400" placeholder="1.1.1.1&#10;bad-domain.com"></textarea>
                     </div>
                     <button onclick="processIOCs()" class="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-play"></i> Run Multi-Check
@@ -72,27 +69,31 @@
 
             </div>
 
-            <!-- Right Side: Results Presentation -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="xl:col-span-2 space-y-6">
                 <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl min-h-[500px]">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold flex items-center gap-2">
                             <i class="fa-solid fa-square-poll-horizontal text-purple-400"></i> Assessment Results
                         </h2>
-                        <button onclick="clearResults()" class="text-sm text-slate-400 hover:text-slate-200">Clear Table</button>
+                        <div class="space-x-4">
+                            <button onclick="exportToCSV()" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition bg-emerald-950/30 px-3 py-1.5 rounded border border-emerald-900/50">
+                                <i class="fa-solid fa-file-csv mr-1"></i> Export CSV
+                            </button>
+                            <button onclick="clearResults()" class="text-sm text-slate-400 hover:text-slate-200 transition">Clear Table</button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-slate-700 text-slate-400 text-sm">
-                                    <th class="pb-3 font-semibold">Indicator</th>
-                                    <th class="pb-3 font-semibold">Type</th>
-                                    <th class="pb-3 font-semibold">Engine Results</th>
+                                    <th class="pb-3 font-semibold w-1/4">Indicator</th>
+                                    <th class="pb-3 font-semibold w-1/12">Type</th>
+                                    <th class="pb-3 font-semibold w-2/3">Engine Results</th>
                                 </tr>
                             </thead>
                             <tbody id="results-table-body" class="divide-y divide-slate-800 text-sm">
-                                <tr>
+                                <tr id="empty-state-row">
                                     <td colspan="3" class="text-center py-12 text-slate-500">No indicators evaluated yet. Enter data and click Run.</td>
                                 </tr>
                             </tbody>
@@ -103,9 +104,10 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic handles detection and dynamic API requests -->
     <script>
-        // Load saved keys on init
+        // Use a CORS proxy to bypass browser restrictions
+        const PROXY_URL = "https://corsproxy.io/?";
+
         window.onload = function() {
             if(localStorage.getItem('vt_key')) document.getElementById('vt-key').value = localStorage.getItem('vt_key');
             if(localStorage.getItem('abuseipdb_key')) document.getElementById('abuseipdb-key').value = localStorage.getItem('abuseipdb_key');
@@ -123,21 +125,17 @@
 
         function clearKeys() {
             localStorage.clear();
-            document.getElementById('vt-key').value = '';
-            document.getElementById('abuseipdb-key').value = '';
-            document.getElementById('otx-key').value = '';
-            document.getElementById('urlscan-key').value = '';
+            document.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
             alert('Cleared saved keys.');
         }
 
         function clearResults() {
             document.getElementById('results-table-body').innerHTML = `
-                <tr>
+                <tr id="empty-state-row">
                     <td colspan="3" class="text-center py-12 text-slate-500">No indicators evaluated yet. Enter data and click Run.</td>
                 </tr>`;
         }
 
-        // Automatic Regex-based IOC Type Detector
         function detectIOCType(val) {
             val = val.trim();
             const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
@@ -161,33 +159,32 @@
                 return;
             }
 
-            tbody.innerHTML = ''; // Reset UI
+            // Remove empty state row if it exists
+            const emptyRow = document.getElementById('empty-state-row');
+            if(emptyRow) emptyRow.remove();
 
             for (let ioc of lines) {
                 const type = detectIOCType(ioc);
                 const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
                 
-                // Append initial skeleton row
                 const rowHTML = `
                     <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-4 font-mono font-medium text-slate-200 break-all pr-4 max-w-xs">${ioc}</td>
-                        <td class="py-4"><span class="px-2 py-0.5 rounded text-xs font-semibold uppercase bg-slate-700 text-slate-300">${type}</span></td>
-                        <td class="py-4 space-y-1.5" id="${rowId}">
+                        <td class="py-4 font-mono font-medium text-slate-200 break-all pr-4 align-top">${ioc}</td>
+                        <td class="py-4 align-top"><span class="px-2 py-0.5 rounded text-xs font-semibold uppercase bg-slate-700 text-slate-300">${type}</span></td>
+                        <td class="py-4 space-y-2 align-top" id="${rowId}">
                             <span class="text-xs text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Checking engines...</span>
                         </td>
                     </tr>`;
-                tbody.insertAdjacentHTML('beforeend', rowHTML);
+                tbody.insertAdjacentHTML('afterbegin', rowHTML); // Prepend new results to top
 
-                // Asynchronously check engines for this row
                 fetchEngineData(ioc, type, rowId);
             }
         }
 
         async function fetchEngineData(ioc, type, rowId) {
             const cell = document.getElementById(rowId);
-            cell.innerHTML = ''; // clear loading state
+            cell.innerHTML = ''; 
 
-            // Read operational API keys
             const keys = {
                 vt: document.getElementById('vt-key').value.trim(),
                 abuseipdb: document.getElementById('abuseipdb-key').value.trim(),
@@ -195,35 +192,32 @@
                 urlscan: document.getElementById('urlscan-key').value.trim()
             };
 
-            // ---- ENGINE 1: abuse.ch (Free, No Key Needed) ----
-            if (type === 'Hash' || type === 'URL' || type === 'IP') {
+            // ---- ENGINE: abuse.ch ----
+            if (type === 'Hash' || type === 'URL') {
                 createBadge(cell, 'abuse.ch', 'Checking...', 'slate');
                 try {
-                    let response, data, isMalicious = false;
+                    let targetUrl, bodyParams;
                     if (type === 'Hash') {
-                        // Query MalwareBazaar API
-                        response = await fetch('https://mb-api.abuse.ch/api/v1/', {
-                            method: 'POST',
-                            body: new URLSearchParams({ 'query': 'get_info', 'hash': ioc })
-                        });
-                        data = await response.json();
-                        isMalicious = (data.query_status === 'ok');
-                    } else if (type === 'URL') {
-                        // Query URLhaus API
-                        response = await fetch('https://urlhaus-api.abuse.ch/v1/url/', {
-                            method: 'POST',
-                            body: new URLSearchParams({ 'url': ioc })
-                        });
-                        data = await response.json();
-                        isMalicious = (data.query_status === 'ok' && data.url_status === 'online');
+                        targetUrl = 'https://mb-api.abuse.ch/api/v1/';
+                        bodyParams = new URLSearchParams({ 'query': 'get_info', 'hash': ioc });
+                    } else {
+                        targetUrl = 'https://urlhaus-api.abuse.ch/v1/url/';
+                        bodyParams = new URLSearchParams({ 'url': ioc });
                     }
-                    updateBadge(cell, 'abuse.ch', isMalicious ? 'Malicious Match' : 'Clean / No Match', isMalicious ? 'red' : 'emerald');
+
+                    const response = await fetch(PROXY_URL + encodeURIComponent(targetUrl), {
+                        method: 'POST',
+                        body: bodyParams
+                    });
+                    const data = await response.json();
+                    const isMalicious = (data.query_status === 'ok');
+                    updateBadge(cell, 'abuse.ch', isMalicious ? 'Malicious Match Found' : 'Clean / No Match', isMalicious ? 'red' : 'emerald');
                 } catch (e) {
-                    updateBadge(cell, 'abuse.ch', 'CORS/API Error', 'yellow');
+                    updateBadge(cell, 'abuse.ch', 'API Error', 'yellow');
                 }
             }
 
-            // ---- ENGINE 2: VirusTotal (Requires Key) ----
+            // ---- ENGINE: VirusTotal ----
             if (keys.vt) {
                 createBadge(cell, 'VirusTotal', 'Checking...', 'slate');
                 try {
@@ -234,26 +228,36 @@
                     if (type === 'URL') endpoint = `https://www.virustotal.com/api/v3/urls/${btoa(ioc).replace(/=/g, "")}`;
 
                     if (endpoint) {
-                        const res = await fetch(endpoint, { headers: { 'x-apikey': keys.vt } });
+                        const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), { 
+                            headers: { 'x-apikey': keys.vt } 
+                        });
+                        
                         if(res.ok) {
                             const data = await res.json();
-                            const stats = data.data.attributes.last_analysis_stats;
-                            const text = `Malicious: ${stats.malicious} / Harmless: ${stats.harmless}`;
+                            const attrs = data.data.attributes;
+                            const stats = attrs.last_analysis_stats;
+                            
+                            // Added additional fields for VT as requested
+                            const reputation = attrs.reputation !== undefined ? attrs.reputation : 'N/A';
+                            const tags = (attrs.tags && attrs.tags.length > 0) ? attrs.tags.join(', ') : 'None';
+                            
+                            const text = `Malicious: ${stats.malicious} | Harmless: ${stats.harmless} | Rep: ${reputation} | Tags: ${tags}`;
                             updateBadge(cell, 'VirusTotal', text, stats.malicious > 0 ? 'red' : 'emerald');
                         } else {
                             updateBadge(cell, 'VirusTotal', `Error (${res.status})`, 'yellow');
                         }
                     }
                 } catch (e) {
-                    updateBadge(cell, 'VirusTotal', 'CORS / Blocked', 'yellow');
+                    updateBadge(cell, 'VirusTotal', 'Proxy/Network Error', 'yellow');
                 }
             }
 
-            // ---- ENGINE 3: AbuseIPDB (Requires Key) ----
+            // ---- ENGINE: AbuseIPDB ----
             if (keys.abuseipdb && type === 'IP') {
                 createBadge(cell, 'AbuseIPDB', 'Checking...', 'slate');
                 try {
-                    const res = await fetch(`https://api.abuseipdb.com/api/v2/check?ipAddress=${ioc}`, {
+                    const endpoint = `https://api.abuseipdb.com/api/v2/check?ipAddress=${ioc}`;
+                    const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), {
                         headers: { 'Key': keys.abuseipdb, 'Accept': 'application/json' }
                     });
                     if (res.ok) {
@@ -261,19 +265,20 @@
                         const score = resData.data.abuseConfidenceScore;
                         updateBadge(cell, 'AbuseIPDB', `Abuse Confidence: ${score}%`, score > 10 ? 'red' : 'emerald');
                     } else {
-                        updateBadge(cell, 'AbuseIPDB', 'Error Response', 'yellow');
+                        updateBadge(cell, 'AbuseIPDB', `Error (${res.status})`, 'yellow');
                     }
                 } catch (e) {
-                    updateBadge(cell, 'AbuseIPDB', 'CORS / Blocked', 'yellow');
+                    updateBadge(cell, 'AbuseIPDB', 'Proxy/Network Error', 'yellow');
                 }
             }
 
-            // ---- ENGINE 4: AlienVault OTX (Requires Key) ----
+            // ---- ENGINE: AlienVault OTX ----
             if (keys.otx && (type === 'IP' || type === 'Domain' || type === 'Hash')) {
                 createBadge(cell, 'AlienVault OTX', 'Checking...', 'slate');
                 try {
                     let section = type === 'IP' ? 'IPv4' : type === 'Domain' ? 'domain' : 'file';
-                    const res = await fetch(`https://otx.alienvault.com/api/v1/indicators/${section}/${ioc}/general`, {
+                    const endpoint = `https://otx.alienvault.com/api/v1/indicators/${section}/${ioc}/general`;
+                    const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), {
                         headers: { 'X-OTX-API-KEY': keys.otx }
                     });
                     if (res.ok) {
@@ -281,30 +286,10 @@
                         const count = resData.pulse_info.count || 0;
                         updateBadge(cell, 'AlienVault OTX', `${count} Related Pulses`, count > 0 ? 'red' : 'emerald');
                     } else {
-                        updateBadge(cell, 'AlienVault OTX', 'Error Response', 'yellow');
+                        updateBadge(cell, 'AlienVault OTX', `Error (${res.status})`, 'yellow');
                     }
                 } catch (e) {
-                    updateBadge(cell, 'AlienVault OTX', 'CORS / Blocked', 'yellow');
-                }
-            }
-
-            // ---- ENGINE 5: URLScan.io (Requires Key) ----
-            if (keys.urlscan && (type === 'URL' || type === 'Domain')) {
-                createBadge(cell, 'URLScan.io', 'Checking...', 'slate');
-                try {
-                    // Note: URLScan requires a POST submission, then polling. For this light script, we query their search API for history.
-                    const res = await fetch(`https://urlscan.io/api/v1/search/?q=domain:${ioc}`, {
-                        headers: { 'API-Key': keys.urlscan }
-                    });
-                    if (res.ok) {
-                        const resData = await res.json();
-                        const matches = resData.total || 0;
-                        updateBadge(cell, 'URLScan.io', `${matches} historical scans`, matches > 0 ? 'amber' : 'emerald');
-                    } else {
-                        updateBadge(cell, 'URLScan.io', 'API Limit/Error', 'yellow');
-                    }
-                } catch (e) {
-                    updateBadge(cell, 'URLScan.io', 'CORS / Blocked', 'yellow');
+                    updateBadge(cell, 'AlienVault OTX', 'Proxy/Network Error', 'yellow');
                 }
             }
 
@@ -313,13 +298,58 @@
             }
         }
 
-        // Helper UI functions to handle individual status badges dynamically
+        // CSV Export Function
+        function exportToCSV() {
+            let csv = [];
+            const rows = document.querySelectorAll("#results-table-body tr");
+            
+            // Check if empty
+            if(rows.length === 0 || rows[0].id === 'empty-state-row') {
+                alert("No data to export.");
+                return;
+            }
+
+            // CSV Header
+            csv.push("Indicator,Type,Engine Results");
+
+            // Extract data from DOM
+            rows.forEach(row => {
+                let cols = row.querySelectorAll("td");
+                if (cols.length < 3) return; 
+
+                // Escape quotes for CSV
+                let indicator = `"${cols[0].innerText.replace(/"/g, '""')}"`;
+                let type = `"${cols[1].innerText.replace(/"/g, '""')}"`;
+                
+                // Combine engine results into one column
+                let engines = [];
+                const badges = cols[2].querySelectorAll("div");
+                badges.forEach(b => {
+                    engines.push(b.innerText.replace(/\n/g, ' ').replace(/"/g, '""').trim());
+                });
+                let engineResults = `"${engines.join(" || ")}"`;
+                
+                csv.push([indicator, type, engineResults].join(","));
+            });
+
+            // Trigger download
+            const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = `IOC_Assessment_${new Date().getTime()}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Helper UI functions
         function createBadge(container, engineName, text, color) {
             const badgeId = `${container.id}-${engineName.replace(/\s+/g, '')}`;
             const html = `
-                <div id="${badgeId}" class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
-                    <span class="font-medium text-slate-400">${engineName}:</span>
-                    <span class="badge-status text-slate-300 font-mono">${text}</span>
+                <div id="${badgeId}" class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs">
+                    <span class="font-medium text-slate-400 w-24">${engineName}:</span>
+                    <span class="badge-status text-slate-300 font-mono text-right flex-1 ml-2 break-words leading-relaxed">${text}</span>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
         }
@@ -332,9 +362,10 @@
             const statusSpan = badge.querySelector('.badge-status');
             statusSpan.innerText = text;
 
-            // Apply semantic colors based on result threat level
+            badge.classList.remove('border-slate-700', 'bg-slate-900');
+
             if(colorTheme === 'red') {
-                badge.classList.add('border-red-900/50', 'bg-red-950/20');
+                badge.classList.add('border-red-900/80', 'bg-red-950/30');
                 statusSpan.classList.add('text-red-400', 'font-bold');
             } else if (colorTheme === 'emerald') {
                 badge.classList.add('border-emerald-900/50', 'bg-emerald-950/10');
