@@ -24,9 +24,15 @@
                 
                 <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
-                        <i class="fa-solid fa-key"></i> API Configurations
+                        <i class="fa-solid fa-gear"></i> Configurations
                     </h2>
                     <div class="space-y-4 text-sm">
+                        <div class="pb-2 mb-2 border-b border-slate-700">
+                            <label class="block text-slate-300 font-medium mb-1">CORS Proxy Routing URL</label>
+                            <input type="text" id="proxy-url" class="w-full bg-slate-900 border border-slate-600 rounded p-2 focus:outline-none focus:border-blue-500 text-slate-400" value="https://corsproxy.io/?">
+                            <p class="text-[10px] text-slate-500 mt-1">If the default proxy fails (Network Error), paste an alternative here.</p>
+                        </div>
+
                         <div>
                             <label class="block text-slate-300 font-medium mb-1">VirusTotal Key</label>
                             <input type="password" id="vt-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste VT API Key">
@@ -39,13 +45,9 @@
                             <label class="block text-slate-300 font-medium mb-1">AlienVault OTX Key</label>
                             <input type="password" id="otx-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste OTX API Key">
                         </div>
-                        <div>
-                            <label class="block text-slate-300 font-medium mb-1">URLScan.io Key</label>
-                            <input type="password" id="urlscan-key" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-blue-500" placeholder="Paste URLScan Key">
-                        </div>
                         <div class="pt-2 flex gap-2">
                             <button onclick="saveKeys()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-1.5 px-3 rounded text-xs transition">
-                                Save Keys (Local)
+                                Save Config (Local)
                             </button>
                             <button onclick="clearKeys()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 font-medium py-1.5 px-3 rounded text-xs transition">
                                 Clear
@@ -59,14 +61,13 @@
                         <i class="fa-solid fa-list-check"></i> Input Indicators
                     </h2>
                     <div>
-                        <label class="block text-sm text-slate-400 mb-2">Enter one IOC per line (IP, Domain, URL, or Hash):</label>
+                        <label class="block text-sm text-slate-400 mb-2">Enter one IOC per line:</label>
                         <textarea id="ioc-input" rows="8" class="w-full bg-slate-900 border border-slate-700 rounded p-3 font-mono text-sm focus:outline-none focus:border-emerald-500 text-emerald-400" placeholder="1.1.1.1&#10;bad-domain.com"></textarea>
                     </div>
                     <button onclick="processIOCs()" class="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-play"></i> Run Multi-Check
                     </button>
                 </div>
-
             </div>
 
             <div class="xl:col-span-2 space-y-6">
@@ -105,28 +106,26 @@
     </div>
 
     <script>
-        // Use a CORS proxy to bypass browser restrictions
-        const PROXY_URL = "https://corsproxy.io/?";
-
         window.onload = function() {
+            if(localStorage.getItem('proxy_url')) document.getElementById('proxy-url').value = localStorage.getItem('proxy_url');
             if(localStorage.getItem('vt_key')) document.getElementById('vt-key').value = localStorage.getItem('vt_key');
             if(localStorage.getItem('abuseipdb_key')) document.getElementById('abuseipdb-key').value = localStorage.getItem('abuseipdb_key');
             if(localStorage.getItem('otx_key')) document.getElementById('otx-key').value = localStorage.getItem('otx_key');
-            if(localStorage.getItem('urlscan_key')) document.getElementById('urlscan-key').value = localStorage.getItem('urlscan_key');
         };
 
         function saveKeys() {
+            localStorage.setItem('proxy_url', document.getElementById('proxy-url').value);
             localStorage.setItem('vt_key', document.getElementById('vt-key').value);
             localStorage.setItem('abuseipdb_key', document.getElementById('abuseipdb-key').value);
             localStorage.setItem('otx_key', document.getElementById('otx-key').value);
-            localStorage.setItem('urlscan_key', document.getElementById('urlscan-key').value);
-            alert('API Keys safely saved to your local browser storage!');
+            alert('Configuration safely saved to your local browser storage!');
         }
 
         function clearKeys() {
             localStorage.clear();
             document.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
-            alert('Cleared saved keys.');
+            document.getElementById('proxy-url').value = 'https://corsproxy.io/?';
+            alert('Cleared saved configurations.');
         }
 
         function clearResults() {
@@ -159,7 +158,6 @@
                 return;
             }
 
-            // Remove empty state row if it exists
             const emptyRow = document.getElementById('empty-state-row');
             if(emptyRow) emptyRow.remove();
 
@@ -175,7 +173,7 @@
                             <span class="text-xs text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Checking engines...</span>
                         </td>
                     </tr>`;
-                tbody.insertAdjacentHTML('afterbegin', rowHTML); // Prepend new results to top
+                tbody.insertAdjacentHTML('afterbegin', rowHTML);
 
                 fetchEngineData(ioc, type, rowId);
             }
@@ -184,12 +182,14 @@
         async function fetchEngineData(ioc, type, rowId) {
             const cell = document.getElementById(rowId);
             cell.innerHTML = ''; 
+            
+            // Fetch proxy directly from UI state
+            const currentProxy = document.getElementById('proxy-url').value.trim();
 
             const keys = {
                 vt: document.getElementById('vt-key').value.trim(),
                 abuseipdb: document.getElementById('abuseipdb-key').value.trim(),
-                otx: document.getElementById('otx-key').value.trim(),
-                urlscan: document.getElementById('urlscan-key').value.trim()
+                otx: document.getElementById('otx-key').value.trim()
             };
 
             // ---- ENGINE: abuse.ch ----
@@ -205,7 +205,7 @@
                         bodyParams = new URLSearchParams({ 'url': ioc });
                     }
 
-                    const response = await fetch(PROXY_URL + encodeURIComponent(targetUrl), {
+                    const response = await fetch(currentProxy + encodeURIComponent(targetUrl), {
                         method: 'POST',
                         body: bodyParams
                     });
@@ -213,7 +213,7 @@
                     const isMalicious = (data.query_status === 'ok');
                     updateBadge(cell, 'abuse.ch', isMalicious ? 'Malicious Match Found' : 'Clean / No Match', isMalicious ? 'red' : 'emerald');
                 } catch (e) {
-                    updateBadge(cell, 'abuse.ch', 'API Error', 'yellow');
+                    updateBadge(cell, 'abuse.ch', 'Proxy Blocked / Network Error', 'yellow');
                 }
             }
 
@@ -228,7 +228,7 @@
                     if (type === 'URL') endpoint = `https://www.virustotal.com/api/v3/urls/${btoa(ioc).replace(/=/g, "")}`;
 
                     if (endpoint) {
-                        const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), { 
+                        const res = await fetch(currentProxy + encodeURIComponent(endpoint), { 
                             headers: { 'x-apikey': keys.vt } 
                         });
                         
@@ -236,8 +236,6 @@
                             const data = await res.json();
                             const attrs = data.data.attributes;
                             const stats = attrs.last_analysis_stats;
-                            
-                            // Added additional fields for VT as requested
                             const reputation = attrs.reputation !== undefined ? attrs.reputation : 'N/A';
                             const tags = (attrs.tags && attrs.tags.length > 0) ? attrs.tags.join(', ') : 'None';
                             
@@ -248,7 +246,7 @@
                         }
                     }
                 } catch (e) {
-                    updateBadge(cell, 'VirusTotal', 'Proxy/Network Error', 'yellow');
+                    updateBadge(cell, 'VirusTotal', 'Proxy Blocked / Network Error', 'yellow');
                 }
             }
 
@@ -257,7 +255,7 @@
                 createBadge(cell, 'AbuseIPDB', 'Checking...', 'slate');
                 try {
                     const endpoint = `https://api.abuseipdb.com/api/v2/check?ipAddress=${ioc}`;
-                    const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), {
+                    const res = await fetch(currentProxy + encodeURIComponent(endpoint), {
                         headers: { 'Key': keys.abuseipdb, 'Accept': 'application/json' }
                     });
                     if (res.ok) {
@@ -268,7 +266,7 @@
                         updateBadge(cell, 'AbuseIPDB', `Error (${res.status})`, 'yellow');
                     }
                 } catch (e) {
-                    updateBadge(cell, 'AbuseIPDB', 'Proxy/Network Error', 'yellow');
+                    updateBadge(cell, 'AbuseIPDB', 'Proxy Blocked / Network Error', 'yellow');
                 }
             }
 
@@ -278,7 +276,7 @@
                 try {
                     let section = type === 'IP' ? 'IPv4' : type === 'Domain' ? 'domain' : 'file';
                     const endpoint = `https://otx.alienvault.com/api/v1/indicators/${section}/${ioc}/general`;
-                    const res = await fetch(PROXY_URL + encodeURIComponent(endpoint), {
+                    const res = await fetch(currentProxy + encodeURIComponent(endpoint), {
                         headers: { 'X-OTX-API-KEY': keys.otx }
                     });
                     if (res.ok) {
@@ -289,7 +287,7 @@
                         updateBadge(cell, 'AlienVault OTX', `Error (${res.status})`, 'yellow');
                     }
                 } catch (e) {
-                    updateBadge(cell, 'AlienVault OTX', 'Proxy/Network Error', 'yellow');
+                    updateBadge(cell, 'AlienVault OTX', 'Proxy Blocked / Network Error', 'yellow');
                 }
             }
 
@@ -303,25 +301,20 @@
             let csv = [];
             const rows = document.querySelectorAll("#results-table-body tr");
             
-            // Check if empty
             if(rows.length === 0 || rows[0].id === 'empty-state-row') {
                 alert("No data to export.");
                 return;
             }
 
-            // CSV Header
             csv.push("Indicator,Type,Engine Results");
 
-            // Extract data from DOM
             rows.forEach(row => {
                 let cols = row.querySelectorAll("td");
                 if (cols.length < 3) return; 
 
-                // Escape quotes for CSV
                 let indicator = `"${cols[0].innerText.replace(/"/g, '""')}"`;
                 let type = `"${cols[1].innerText.replace(/"/g, '""')}"`;
                 
-                // Combine engine results into one column
                 let engines = [];
                 const badges = cols[2].querySelectorAll("div");
                 badges.forEach(b => {
@@ -332,7 +325,6 @@
                 csv.push([indicator, type, engineResults].join(","));
             });
 
-            // Trigger download
             const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
             const downloadLink = document.createElement("a");
             downloadLink.download = `IOC_Assessment_${new Date().getTime()}.csv`;
